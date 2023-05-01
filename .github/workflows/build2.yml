@@ -1,0 +1,69 @@
+name: Build and Release3
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v1.0.2
+
+    - name: Restore dependencies
+      run: msbuild /t:restore /p:Platform=x64
+
+    - name: Build project
+      run: msbuild /p:Platform=x86
+
+    - name: Publish artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: myapp
+        path: bin/Release
+
+  release:
+    needs: build
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v1.0.2
+
+    - name: Download artifact
+      uses: actions/download-artifact@v2
+      with:
+        name: myapp
+
+    - name: Create release
+      id: create_release
+      uses: actions/create-release@v1.0.0
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        body: |
+          Changes in this Release:
+
+          * Add new feature A.
+          * Fix bug B.
+        draft: false
+        prerelease: false
+
+    - name: Upload asset
+      uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: myapp.zip
+        asset_name: myapp.zip
+        asset_content_type: application/zip
