@@ -18,12 +18,6 @@ jobs:
         with:
           sdk-version: 18362
       
-      - name: Generate PFX certificate
-        run: |
-          $certPassword = ConvertTo-SecureString -String ${{ secrets.CERT_PASSWORD }} -Force -AsPlainText
-          $cert = New-SelfSignedCertificate -DnsName "localhost" -CertStoreLocation "Cert:\LocalMachine\My" -FriendlyName "MyCert" -NotAfter (Get-Date).AddYears(10) -KeyUsage DigitalSignature, KeyEncipherment, DataEncipherment -KeyAlgorithm RSA -KeyLength 2048 -HashAlgorithm SHA256 -Provider "Microsoft Enhanced RSA and AES Cryptographic Provider"
-          Export-PfxCertificate -Cert $cert -FilePath D:\a\litsz\litsz\cert.pfx -Password $certPassword
-      
       - name: Build with MSBuild
         run: |
           New-Item -ItemType Directory -Path D:\a\litsz\litsz\output
