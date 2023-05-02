@@ -20,8 +20,6 @@ jobs:
       
       - name: Build with MSBuild
         run: |
-          New-Item -ItemType Directory -Path D:\a\litsz\litsz\output
-          Copy-Item -Path .\cert.pfx -Destination D:\a\litsz\litsz\output\cert.pfx -Force
           msbuild /t:restore /t:build /p:Platform=x64 /p:Configuration=Release /p:AppxBundlePlatforms="x64" /p:AppxBundle=Always /p:UapAppxPackageBuildMode=Release /p:PackageCertificateKeyFile=D:\a\litsz\litsz\BiliLite.UWP\App_TemporaryKey.pfx /p:AppxPackageDir=D:\a\litsz\litsz\output\bin
 
       - name: Upload
