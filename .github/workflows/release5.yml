@@ -1,0 +1,37 @@
+name: Build and Release5
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up MSBuild
+        uses: microsoft/setup-msbuild@v1.0.2
+
+      - name: Setup Windows 10 SDK Action
+        uses: GuillaumeFalourd/setup-windows10-sdk-action@v1.11
+        with:
+          sdk-version: 18362
+      
+      - name: Generate PFX certificate
+        run: |
+          $certPassword = ConvertTo-SecureString -String ${{ secrets.CERT_PASSWORD }} -Force -AsPlainText
+          $cert = New-SelfSignedCertificate -DnsName "localhost" -CertStoreLocation "Cert:\LocalMachine\My" -FriendlyName "MyCert" -NotAfter (Get-Date).AddYears(10) -KeyUsage DigitalSignature, KeyEncipherment, DataEncipherment -KeyAlgorithm RSA -KeyLength 2048 -HashAlgorithm SHA256 -Provider "Microsoft Enhanced RSA and AES Cryptographic Provider"
+          Export-PfxCertificate -Cert $cert -FilePath D:\a\litsz\litsz\cert.pfx -Password $certPassword
+      
+      - name: Build with MSBuild
+        run: |
+          New-Item -ItemType Directory -Path D:\a\litsz\litsz\output
+          Copy-Item -Path .\cert.pfx -Destination D:\a\litsz\litsz\output\cert.pfx -Force
+          msbuild /t:restore /t:build /p:Platform=x64 /p:Configuration=Release /p:AppxBundlePlatforms="x64" /p:AppxBundle=Always /p:UapAppxPackageBuildMode=Release /p:PackageCertificateKeyFile=D:\a\litsz\litsz\BiliLite.UWP\App_TemporaryKey.pfx /p:AppxPackageDir=D:\a\litsz\litsz\output\bin
+
+      - name: Upload
+        uses: actions/upload-artifact@v3.1.1
+        with:
+          name: "test"
+          path: D:\a\litsz\litsz\output\
